@@ -1,0 +1,5 @@
+_target_: src.models.resnet.Classifire
+
+arch: "resnet50"
+pretrain: True
+num_classes: -1
