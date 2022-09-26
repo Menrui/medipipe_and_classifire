@@ -122,7 +122,7 @@ def train(config: DictConfig) -> Optional[float]:
         test_loop(
             model=model.load_state_dict(checkpoint["state_dict"]),
             loader=test_loader,
-            ckpt_path=ckpt_path,
+            ckpt_path=None,
             device=device,
         )
     iteration_history.plot_graph(["train_loss", "val_loss"], "loss_iter.png")
