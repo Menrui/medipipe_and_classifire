@@ -1,33 +1,30 @@
-from typing import Optional, Tuple
-import torch
+from typing import Optional
 
-from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
-from torchvision.datasets import CIFAR10
+from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import transforms
 
 from . import BaseDataModule
+from src.datamodules.components.detector_dataset import DetectorDataset
 
 
-class CIFARDataModule(BaseDataModule):
+class DetectorDataModule(BaseDataModule):
     def __init__(
         self,
         data_source: str = "data/",
-        train_val_test_split: Tuple[int, int, int] = (45_000, 5_000, 10_000),
         batch_size: int = 64,
         num_workers: int = 0,
         pin_memory: bool = False,
     ) -> None:
         super().__init__()
 
-        self.data_dir = data_source
-        self.train_val_test_split = train_val_test_split
+        self.data_source = data_source
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
 
         self.transforms = transforms.Compose(
             [
-                transforms.Resize(64),
+                transforms.Resize((224, 224)),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)
@@ -43,21 +40,21 @@ class CIFARDataModule(BaseDataModule):
 
     @property
     def num_classes(self) -> int:
-        return 10
+        return self.data_train.num_classes
 
     def prepare_data(self):
-        CIFAR10(self.data_dir, train=True, download=True)
-        CIFAR10(self.data_dir, train=False, download=True)
+        pass
 
     def setup(self, stage: Optional[str] = None):
         if not self.data_train and not self.data_val and not self.data_test:
-            trainset = CIFAR10(self.data_dir, train=True, transform=self.transforms)
-            testset = CIFAR10(self.data_dir, train=False, transform=self.transforms)
-            dataset = ConcatDataset(datasets=[trainset, testset])
-            self.data_train, self.data_val, self.data_test = random_split(
-                dataset=dataset,
-                lengths=self.train_val_test_split,
-                generator=torch.Generator().manual_seed(42),
+            self.data_train = DetectorDataset(
+                data_source=self.data_source, stage="train", transform=self.transforms
+            )
+            self.data_val = DetectorDataset(
+                data_source=self.data_source, stage="val", transform=self.transforms
+            )
+            self.data_test = DetectorDataset(
+                data_source=self.data_source, stage="test", transform=self.transforms
             )
 
     def train_dataloader(self):

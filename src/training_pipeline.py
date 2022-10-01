@@ -106,7 +106,9 @@ def train(config: DictConfig) -> Optional[float]:
                 "state_dict": model.state_dict(),
                 "best_acc1": best_acc1.compute(),
                 "optimizer": optimizer.state_dict(),
-                "scheduler": scheduler.state_dict(),
+                "scheduler": scheduler.state_dict()
+                if config.get("scheduler")
+                else None,
             },
             is_best,
             save_dir=ckpt_dir,
@@ -119,12 +121,14 @@ def train(config: DictConfig) -> Optional[float]:
         checkpoint = torch.load(str(ckpt_path))
         log.info("Starting testing!")
         test_loader = datamodule.test_dataloader()
-        test_loop(
-            model=model.load_state_dict(checkpoint["state_dict"]),
+        model.load_state_dict(checkpoint["state_dict"]),
+        acc, preds, targets = test_loop(
+            model=model,
             loader=test_loader,
             ckpt_path=None,
             device=device,
         )
+        log.info(f"test acc : {acc}")
     iteration_history.plot_graph(["train_loss", "val_loss"], "loss_iter.png")
     iteration_history.plot_graph(
         ["train_acc", "val_acc"],
@@ -176,6 +180,9 @@ def train_loop(
             output = model(images)
             loss = criterion(output, target)
 
+            # print(output.shape)
+            # print(target.shape)
+
             acc1 = top1_acc(output, target).item()
             acc3 = top3_acc(output, target).item()
 
@@ -221,8 +228,8 @@ def val_loop(
                 output = model(images)
                 loss = criterion(output, target)
 
-                acc1 = top1_acc(output, target)
-                acc3 = top3_acc(output, target)
+                acc1 = top1_acc(output, target).item()
+                acc3 = top3_acc(output, target).item()
 
                 losses.update(loss.item())
 

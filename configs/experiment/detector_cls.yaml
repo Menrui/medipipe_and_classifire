@@ -1,0 +1,26 @@
+# @package _global_
+
+name: "default"
+
+defaults:
+  - override /datamodule: detector.yaml
+  - override /model: resnet.yaml
+  - override /optimizer: adam.yaml
+  - override /scheduler: steplr.yaml
+
+model:
+  arch: "resnet50"
+  pretrain: True
+
+datamodule:
+  batch_size: 64
+  num_workers: 4
+
+optimizer:
+  lr: 0.001
+
+num_epochs: 2
+gpu: 1
+
+train: True
+test: True

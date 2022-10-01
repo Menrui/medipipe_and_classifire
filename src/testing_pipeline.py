@@ -1,6 +1,10 @@
+# import matplotlib.pyplot as plt
+# import seaborn as sns
 import torch
 from torchmetrics import Accuracy
 from tqdm import tqdm
+
+# from sklearn.metrics import confusion_matrix
 
 
 def test():
@@ -23,6 +27,8 @@ def test_loop(
 
     model.eval()
 
+    preds = []
+    targets = []
     with torch.no_grad():
         with tqdm(loader) as pbar:
             for i, batch in enumerate(pbar):
@@ -36,8 +42,23 @@ def test_loop(
                 target = batch[1].to(device)
 
                 output = model(images)
+                pred = torch.argmax(output, dim=1)
 
                 acc1 = top1_acc(output, target)
                 acc3 = top3_acc(output, target)
 
-    return top1_acc.compute()
+                preds.append(pred)
+                targets.append(target)
+
+    preds = torch.cat(preds)
+    targets = torch.cat(targets)
+
+    return top1_acc.compute(), preds.cpu().detach(), targets.cpu().detach()
+
+
+# def calcurate_cls_score(preds, targets, labels):
+#     cm = confusion_matrix(targets, preds)
+#     sns.headmap(
+#         cm,
+#     )
+#     plt.savefig("")
