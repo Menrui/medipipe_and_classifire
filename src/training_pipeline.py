@@ -17,13 +17,14 @@ import torch.nn as nn
 
 from src import utils
 from src.utils.logger import get_logger
-from src.testing_pipeline import test_loop
+from src.testing_pipeline import calcurate_cls_score, test_loop
 from src.utils.history import History
 
 log = get_logger(__name__)
 
 
 def train(config: DictConfig) -> Optional[float]:
+    log.info("Start training!")
     if config.get("seed"):
         utils.seed_everything(config.seed)
 
@@ -63,6 +64,7 @@ def train(config: DictConfig) -> Optional[float]:
     )
 
     best_acc1 = MaxMetric().to(device)
+    log.info("Start learning loop")
     for epoch in range(config.num_epochs):
         train_loss, train_acc = train_loop(
             loader=train_loader,
@@ -90,10 +92,10 @@ def train(config: DictConfig) -> Optional[float]:
 
         epoch_history(
             {
-                "train_loss": train_loss,
-                "train_acc": train_acc,
-                "val_loss": val_loss,
-                "val_acc": val_acc,
+                "train_loss": train_loss.cpu().numpy(),
+                "train_acc": train_acc.cpu().numpy(),
+                "val_loss": val_loss.cpu().numpy(),
+                "val_acc": val_acc.cpu().numpy(),
             }
         )
 
@@ -106,20 +108,35 @@ def train(config: DictConfig) -> Optional[float]:
                 "state_dict": model.state_dict(),
                 "best_acc1": best_acc1.compute(),
                 "optimizer": optimizer.state_dict(),
-                "scheduler": scheduler.state_dict()
-                if config.get("scheduler")
-                else None,
+                "scheduler": scheduler.state_dict() if config.get("scheduler") else None,
             },
             is_best,
             save_dir=ckpt_dir,
         )
 
+    log.info("Plot learning curve")
+    iteration_history.plot_graph(["train_loss", "val_loss"], "lc_loss_iter.png")
+    iteration_history.plot_graph(
+        ["train_acc", "val_acc"],
+        "lc_acc_iter.png",
+        ylabel="Accuracy",
+        title="Accuracy.",
+    )
+    epoch_history.plot_graph(["train_loss", "val_loss"], "lc_loss_epoch.png")
+    epoch_history.plot_graph(
+        ["train_acc", "val_acc"],
+        "lc_acc_epoch.png",
+        ylabel="Accuracy",
+        title="Accuracy.",
+    )
+    log.info("Complete training!")
+
     if config.get("test"):
+        log.info("Starting testing!")
         ckpt_path = ckpt_dir.joinpath("best.pth")
         # if not config.get("train"):
         #     ckpt_path = None
         checkpoint = torch.load(str(ckpt_path))
-        log.info("Starting testing!")
         test_loader = datamodule.test_dataloader()
         model.load_state_dict(checkpoint["state_dict"]),
         acc, preds, targets = test_loop(
@@ -129,20 +146,13 @@ def train(config: DictConfig) -> Optional[float]:
             device=device,
         )
         log.info(f"test acc : {acc}")
-    iteration_history.plot_graph(["train_loss", "val_loss"], "loss_iter.png")
-    iteration_history.plot_graph(
-        ["train_acc", "val_acc"],
-        "acc_iter.png",
-        ylabel="Accuracy",
-        title="Accuracy.",
-    )
-    epoch_history.plot_graph(["train_loss", "val_loss"], "loss_epoch.png")
-    epoch_history.plot_graph(
-        ["train_acc", "val_acc"],
-        "acc_epoch.png",
-        ylabel="Accuracy",
-        title="Accuracy.",
-    )
+        calcurate_cls_score(
+            preds=preds,
+            targets=targets,
+            classes=list(datamodule.data_test.class_to_idx.keys()),
+            savepath="confusion_matrix.png",
+        )
+
     return best_acc1.compute()
 
 
@@ -183,8 +193,8 @@ def train_loop(
             # print(output.shape)
             # print(target.shape)
 
-            acc1 = top1_acc(output, target).item()
-            acc3 = top3_acc(output, target).item()
+            acc1 = top1_acc(output, target).cpu().item()
+            acc3 = top3_acc(output, target).cpu().item()
 
             losses.update(loss.item())
 
@@ -192,7 +202,7 @@ def train_loop(
             loss.backward()
             optimizer.step()
 
-            history({"train_loss": loss.item(), "train_acc": acc1})
+            history({"train_loss": loss.cpu().item(), "train_acc": acc1})
 
     return losses.compute(), top1_acc.compute()
 

@@ -10,12 +10,14 @@ import pandas as pd
 import torch
 from PIL import Image
 from torchvision import transforms
+import torchvision.transforms.functional as TF
+from src.datamodules.components.transforms import LongsideResizeSquarePadding
 
 
 class DetectorDataset(torch.utils.data.Dataset):
     def __init__(
         self,
-        data_source: Path = Path("data/kinkazan"),
+        data_source: Path = Path("data/d4cls/d4cls.csv"),
         stage: Literal["train", "val", "test"] = "train",
         transform: transforms.Compose = None,
     ) -> None:
@@ -37,18 +39,19 @@ class DetectorDataset(torch.utils.data.Dataset):
         elif data_source.is_file and data_source.suffix == ".csv":
             # print("csv")
             stage2idx = {k: v for k, v in zip(["train", "val", "test"], [0, 1, 2])}
+            if stage2idx.get(stage) is None:
+                raise ValueError(
+                    f"Invalid Value of stage: {stage}, please input ['train', 'val', 'test']"
+                )
             df = pd.read_csv(str(data_source))
-            stage_label = df["learning_phase"].values
-            self.data_paths = df["filepath"].values[stage_label == stage2idx.get(stage)]
-            self.label_set = np.unique(
-                df["label"].values[stage_label == stage2idx.get(stage)]
-            )
-            self.label2idx = {
-                k: v for k, v in zip(self.label_set, range(len(self.label_set)))
-            }
+            stage_tags = df["learning_phase"].values
+            self.data_paths = df["fullpath"].values[stage_tags == stage2idx.get(stage)]
+            self.classes = np.unique(df["category"].values[stage_tags == stage2idx.get(stage)])
+            self.class_to_idx = {k: v for k, v in zip(self.classes, range(len(self.classes)))}
+            self.idx_to_class = {k: v for k, v in zip(range(len(self.classes)), self.classes)}
             self.targets = [
-                self.label2idx.get(li)
-                for li in df["label"].values[stage_label == stage2idx.get(stage)]
+                self.class_to_idx.get(li)
+                for li in df["category"].values[stage_tags == stage2idx.get(stage)]
             ]
         else:
             raise ValueError(f"Invalid value of data_source: {data_source}")
@@ -56,10 +59,16 @@ class DetectorDataset(torch.utils.data.Dataset):
         if transform is None:
             self.transform = transforms.Compose(
                 [
-                    transforms.Resize(224),
+                    # transforms.Resize(224),
+                    LongsideResizeSquarePadding(
+                        size=224,
+                        interpolation=TF.InterpolationMode.NEAREST,
+                        antialias=False,
+                    ),
                     transforms.ToTensor(),
                     transforms.Normalize(
-                        (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)
+                        (0.4914, 0.4822, 0.4465),
+                        (0.2023, 0.1994, 0.2010),
                     ),
                 ]
             )
@@ -71,7 +80,7 @@ class DetectorDataset(torch.utils.data.Dataset):
 
     @property
     def num_classes(self):
-        return len(self.label_set)
+        return len(self.classes)
 
     def __getitem__(self, index):
         data_path = self.data_paths[index]

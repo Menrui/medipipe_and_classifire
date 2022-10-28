@@ -1,10 +1,14 @@
-# import matplotlib.pyplot as plt
-# import seaborn as sns
+from pathlib import Path
+from typing import Union
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 import torch
 from torchmetrics import Accuracy
 from tqdm import tqdm
 
-# from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix
 
 
 def test():
@@ -56,9 +60,22 @@ def test_loop(
     return top1_acc.compute(), preds.cpu().detach(), targets.cpu().detach()
 
 
-# def calcurate_cls_score(preds, targets, labels):
-#     cm = confusion_matrix(targets, preds)
-#     sns.headmap(
-#         cm,
-#     )
-#     plt.savefig("")
+def calcurate_cls_score(
+    preds: Union[torch.Tensor, np.ndarray],
+    targets: Union[torch.Tensor, np.ndarray],
+    classes: list[str],
+    savepath: Path,
+):
+    cm = confusion_matrix(targets, preds)
+    pd.DataFrame(cm, index=classes, columns=classes).to_csv(
+        savepath.parent.joinpath(savepath.stem + ".csv")
+    )
+    sns.heatmap(
+        cm,
+        xticklabels=classes,
+        yticklabels=classes,
+        square=True,
+        annot=False,
+        # cmap=
+    )
+    plt.savefig(savepath)

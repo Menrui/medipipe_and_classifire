@@ -1,6 +1,6 @@
 _target_: src.datamodules.detector.DetectorDataModule
 
-data_source: ${data_dir}/detector/data_source.csv # data_dir is specified in config.yaml
+data_source: ${data_dir}/d4cls/d4cls.csv # data_dir is specified in config.yaml
 batch_size: 64
 num_workers: 4
 pin_memory: True
