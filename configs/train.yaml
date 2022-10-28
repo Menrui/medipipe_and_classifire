@@ -20,6 +20,8 @@ defaults:
 original_work_dir: ${hydra:runtime.cwd}
 data_dir: ${original_work_dir}/data/
 
+seed: 9999
+
 num_epochs: 3
 gpu: 1
 
