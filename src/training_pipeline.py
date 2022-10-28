@@ -232,9 +232,11 @@ def val_loop(
             for i, batch in enumerate(pbar):
                 pbar.set_description("[Validation]")
                 pbar.set_postfix(
-                    loss=f"{losses.compute().item() if i != 0 else 0:.3f}",
-                    acc1=f"{acc1:.2f}",
-                    acc3=f"{acc3:.2f}",
+                    OrderedDict(
+                        loss=f"{losses.compute().item() if i != 0 else 0:.3f}",
+                        acc1=f"{acc1:.2f}",
+                        acc3=f"{acc3:.2f}",
+                    )
                 )
 
                 images = batch[0].to(device)
