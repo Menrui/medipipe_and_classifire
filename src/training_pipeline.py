@@ -172,6 +172,7 @@ def train_loop(
     top3_acc = Accuracy(top_k=3).to(device)
 
     model.train()
+    scaler = torch.cuda.amp.GradScaler()
 
     with tqdm(loader) as pbar:
         for i, batch in enumerate(pbar):
@@ -187,8 +188,9 @@ def train_loop(
             images = batch[0].to(device)
             target = batch[1].to(device)
 
-            output = model(images)
-            loss = criterion(output, target)
+            with torch.cuda.amp.autocast():
+                output = model(images)
+                loss = criterion(output, target)
 
             # print(output.shape)
             # print(target.shape)
@@ -199,8 +201,11 @@ def train_loop(
             losses.update(loss.item())
 
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            # loss.backward()
+            # optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
             history({"train_loss": loss.cpu().item(), "train_acc": acc1})
 
