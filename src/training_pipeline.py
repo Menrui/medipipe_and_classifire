@@ -150,7 +150,7 @@ def train(config: DictConfig) -> Optional[float]:
             preds=preds,
             targets=targets,
             classes=list(datamodule.data_test.class_to_idx.keys()),
-            savepath="confusion_matrix.png",
+            savepath=Path("confusion_matrix.png"),
         )
 
     return best_acc1.compute()
