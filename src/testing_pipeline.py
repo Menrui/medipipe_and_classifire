@@ -56,6 +56,8 @@ def test_loop(
 
     preds = torch.cat(preds)
     targets = torch.cat(targets)
+    print(f"Top1 Accuracy : {top1_acc.compute()}")
+    print(f"Top3 Accuracy : {top3_acc.compute()}")
 
     return top1_acc.compute(), preds.cpu().detach(), targets.cpu().detach()
 
