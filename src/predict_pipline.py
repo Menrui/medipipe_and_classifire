@@ -3,6 +3,7 @@ import hydra
 from omegaconf import DictConfig
 import pandas as pd
 import torch
+from scipy.stats import entropy
 from tqdm import tqdm
 from src import utils
 from src.datamodules.components.prediction_detector_dataset import PredictionDetectorDataset
@@ -47,6 +48,8 @@ def predict(config: DictConfig, log_dir: Path, data_source: Path) -> None:
     log.info("Start prediction loop")
     model.eval()
     preds = []
+    entropies = []
+    pred_probs = []
     pred_categorys = []
     filepaths = []
 
@@ -56,13 +59,22 @@ def predict(config: DictConfig, log_dir: Path, data_source: Path) -> None:
             filepath = batch[1]
 
             output = model(images)
+            prob = torch.nn.functional.softmax(output, dim=1).squeeze()
             pred = torch.argmax(output, dim=1)
             pred_category = [category[_p.item()] for _p in pred]
+            pred_prob = prob[pred]
+            output_entropy = entropy(prob.cpu().detach().numpy())
 
             preds.append(pred)
+            pred_probs.append(pred_prob)
+            entropies.append(output_entropy)
             pred_categorys.extend(pred_category)
             filepaths.extend(filepath)
 
-    df = pd.DataFrame([filepaths, pred_categorys], index=["filepath", "category"]).T
+    pred_probs = torch.cat(pred_probs).tolist()
+    df = pd.DataFrame(
+        [filepaths, pred_categorys, pred_probs, entropies],
+        index=["filepath", "category", "probability", "entropy"],
+    ).T
     data_dir = data_source if data_source.is_dir() else data_source.parent
     df.to_csv(data_dir.joinpath("classifire_prediction_result.csv"))
