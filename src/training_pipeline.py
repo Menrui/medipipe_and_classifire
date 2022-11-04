@@ -152,6 +152,8 @@ def train(config: DictConfig) -> Optional[float]:
             classes=list(datamodule.data_test.class_to_idx.keys()),
             savepath=Path("confusion_matrix.png"),
         )
+    with open("category.txt", "w") as o:
+        print(*list(datamodule.data_test.class_to_idx.keys()), file=o, sep=",")
 
     return best_acc1.compute()
 
@@ -205,7 +207,7 @@ def train_loop(
             # optimizer.step()
             scaler.scale(loss).backward()
             scaler.step(optimizer)
-            scaler.update()
+            scaler.update()  # log = get_logger(__name__)
 
             history({"train_loss": loss.cpu().item(), "train_acc": acc1})
 

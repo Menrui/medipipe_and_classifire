@@ -30,9 +30,23 @@ class DetectorDataModule(BaseDataModule):
                 LongsideResizeSquarePadding(
                     size=224,
                 ),
+                transforms.RandomHorizontalFlip(0.5),
+                transforms.RandomRotation(degrees=2),
                 transforms.ToTensor(),
                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
             ]
+        )
+        self.test_transform = transforms.Compose(
+            (
+                [
+                    # transforms.Resize((224, 224)),
+                    LongsideResizeSquarePadding(
+                        size=224,
+                    ),
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+                ]
+            )
         )
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
@@ -54,10 +68,10 @@ class DetectorDataModule(BaseDataModule):
                 data_source=self.data_source, stage="train", transform=self.transforms
             )
             self.data_val = DetectorDataset(
-                data_source=self.data_source, stage="val", transform=self.transforms
+                data_source=self.data_source, stage="val", transform=self.test_transform
             )
             self.data_test = DetectorDataset(
-                data_source=self.data_source, stage="test", transform=self.transforms
+                data_source=self.data_source, stage="test", transform=self.test_transform
             )
 
     def train_dataloader(self):
