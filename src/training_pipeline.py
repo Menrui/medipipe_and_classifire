@@ -1,10 +1,10 @@
 import os
 from pathlib import Path
-import hydra
-
-from omegaconf import DictConfig
 from typing import Optional, OrderedDict, Tuple
-from torchmetrics import MeanMetric, Accuracy, MaxMetric
+
+import hydra
+from omegaconf import DictConfig
+from torchmetrics import Accuracy, MaxMetric, MeanMetric
 from tqdm import tqdm
 
 try:
@@ -16,9 +16,9 @@ import torch
 import torch.nn as nn
 
 from src import utils
-from src.utils.logger import get_logger
 from src.testing_pipeline import calcurate_cls_score, test_loop
 from src.utils.history import History
+from src.utils.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -108,7 +108,9 @@ def train(config: DictConfig) -> Optional[float]:
                 "state_dict": model.state_dict(),
                 "best_acc1": best_acc1.compute(),
                 "optimizer": optimizer.state_dict(),
-                "scheduler": scheduler.state_dict() if config.get("scheduler") else None,
+                "scheduler": scheduler.state_dict()
+                if config.get("scheduler")
+                else None,
             },
             is_best,
             save_dir=ckpt_dir,
@@ -133,7 +135,10 @@ def train(config: DictConfig) -> Optional[float]:
 
     if config.get("test"):
         log.info("Starting testing!")
-        ckpt_path = ckpt_dir.joinpath("best.pth")
+        if ckpt_dir.joinpath("best.pth").exists():
+            ckpt_path = ckpt_dir.joinpath("best.pth")
+        else:
+            ckpt_path = ckpt_dir.joinpath("checkpoint.pth")
         # if not config.get("train"):
         #     ckpt_path = None
         checkpoint = torch.load(str(ckpt_path))

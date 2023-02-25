@@ -8,9 +8,10 @@ except ImportError:
 import numpy as np
 import pandas as pd
 import torch
+import torchvision.transforms.functional as TF
 from PIL import Image
 from torchvision import transforms
-import torchvision.transforms.functional as TF
+
 from src.datamodules.components.transforms import LongsideResizeSquarePadding
 
 
@@ -46,9 +47,14 @@ class DetectorDataset(torch.utils.data.Dataset):
             df = pd.read_csv(str(data_source))
             stage_tags = df["learning_phase"].values
             self.data_paths = df["fullpath"].values[stage_tags == stage2idx.get(stage)]
-            self.classes = np.unique(df["category"].values[stage_tags == stage2idx.get(stage)])
-            self.class_to_idx = {k: v for k, v in zip(self.classes, range(len(self.classes)))}
-            self.idx_to_class = {k: v for k, v in zip(range(len(self.classes)), self.classes)}
+            # self.data_paths = df["crop_path"].values[stage_tags == stage2idx.get(stage)]
+            self.classes = np.unique(df["category"])
+            self.class_to_idx = {
+                k: v for k, v in zip(self.classes, range(len(self.classes)))
+            }
+            self.idx_to_class = {
+                k: v for k, v in zip(range(len(self.classes)), self.classes)
+            }
             self.targets = [
                 self.class_to_idx.get(li)
                 for li in df["category"].values[stage_tags == stage2idx.get(stage)]

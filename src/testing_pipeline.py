@@ -1,14 +1,14 @@
 from pathlib import Path
 from typing import Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
+from sklearn.metrics import confusion_matrix
 from torchmetrics import Accuracy
 from tqdm import tqdm
-
-from sklearn.metrics import confusion_matrix
 
 
 def test():
@@ -36,7 +36,7 @@ def test_loop(
     with torch.no_grad():
         with tqdm(loader) as pbar:
             for i, batch in enumerate(pbar):
-                pbar.set_description("[Validation]")
+                pbar.set_description("[Test]")
                 pbar.set_postfix(
                     acc1=f"{acc1:.2f}",
                     acc3=f"{acc3:.2f}",
@@ -67,7 +67,7 @@ def calcurate_cls_score(
     targets: Union[torch.Tensor, np.ndarray],
     classes: list[str],
     savepath: Path,
-):
+) -> None:
     cm = confusion_matrix(targets, preds)
     pd.DataFrame(cm, index=classes, columns=classes).to_csv(
         savepath.parent.joinpath(savepath.stem + ".csv")
