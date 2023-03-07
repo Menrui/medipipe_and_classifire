@@ -1,4 +1,4 @@
-_target_: src.datamodules.hel.HELDataModule
+_target_: src.datamodules.mp.MPDataModule
 
 data_source: ${data_dir} # data_dir is specified in config.yaml
 batch_size: 64
