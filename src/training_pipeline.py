@@ -74,6 +74,7 @@ def train(config: DictConfig) -> Optional[float]:
             epoch=epoch,
             history=iteration_history,
             device=device,
+            num_classes=datamodule.num_classes,
         )
 
         val_loss, val_acc = val_loop(
@@ -82,6 +83,7 @@ def train(config: DictConfig) -> Optional[float]:
             criterion=criterion,
             history=iteration_history,
             device=device,
+            num_classes=datamodule.num_classes,
         )
 
         if config.get("scheduler"):
@@ -104,7 +106,7 @@ def train(config: DictConfig) -> Optional[float]:
         utils.save_checkpoint(
             {
                 "epoch": epoch + 1,
-                "arch": config.model.arch,
+                # "arch": config.model.arch,
                 "state_dict": model.state_dict(),
                 "best_acc1": best_acc1.compute(),
                 "optimizer": optimizer.state_dict(),
@@ -149,6 +151,7 @@ def train(config: DictConfig) -> Optional[float]:
             loader=test_loader,
             ckpt_path=None,
             device=device,
+            num_classes=datamodule.num_classes,
         )
         log.info(f"test acc : {acc}")
         calcurate_cls_score(
@@ -171,12 +174,13 @@ def train_loop(
     epoch: int,
     history: History,
     device: Literal["cuda", "cpu"],
+    num_classes: int,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     losses = MeanMetric().to(device)
     acc1 = 0.0
-    acc3 = 0.0
-    top1_acc = Accuracy(top_k=1).to(device)
-    top3_acc = Accuracy(top_k=3).to(device)
+    # acc3 = 0.0
+    top1_acc = Accuracy(top_k=1, task="multiclass", num_classes=num_classes).to(device)
+    # top3_acc = Accuracy(top_k=3, task="multiclass", num_classes=num_classes).to(device)
 
     model.train()
     scaler = torch.cuda.amp.GradScaler()
@@ -188,7 +192,7 @@ def train_loop(
                 OrderedDict(
                     loss=f"{losses.compute().item() if i != 0 else 0:.3f}",
                     acc1=f"{acc1:.2f}",
-                    acc3=f"{acc3:.2f}",
+                    # acc3=f"{acc3:.2f}",
                 )
             )
 
@@ -203,7 +207,7 @@ def train_loop(
             # print(target.shape)
 
             acc1 = top1_acc(output, target).cpu().item()
-            acc3 = top3_acc(output, target).cpu().item()
+            # acc3 = top3_acc(output, target).cpu().item()
 
             losses.update(loss.item())
 
@@ -225,12 +229,13 @@ def val_loop(
     criterion: nn.Module,
     history: History,
     device: Literal["cuda", "cpu"],
+    num_classes: int,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     losses = MeanMetric().to(device)
     acc1 = 0.0
-    acc3 = 0.0
-    top1_acc = Accuracy(top_k=1).to(device)
-    top3_acc = Accuracy(top_k=3).to(device)
+    # acc3 = 0.0
+    top1_acc = Accuracy(top_k=1, task="multiclass", num_classes=num_classes).to(device)
+    # top3_acc = Accuracy(top_k=3, task="multiclass", num_classes=num_classes).to(device)
 
     model.eval()
 
@@ -242,7 +247,7 @@ def val_loop(
                     OrderedDict(
                         loss=f"{losses.compute().item() if i != 0 else 0:.3f}",
                         acc1=f"{acc1:.2f}",
-                        acc3=f"{acc3:.2f}",
+                        # acc3=f"{acc3:.2f}",
                     )
                 )
 
@@ -253,7 +258,7 @@ def val_loop(
                 loss = criterion(output, target)
 
                 acc1 = top1_acc(output, target).item()
-                acc3 = top3_acc(output, target).item()
+                # acc3 = top3_acc(output, target).item()
 
                 losses.update(loss.item())
 

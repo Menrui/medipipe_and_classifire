@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union
+from typing import Literal, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,18 +16,19 @@ def test():
 
 
 def test_loop(
-    model,
-    loader,
-    ckpt_path,
-    device,
+    model: torch.nn.Module,
+    loader: torch.utils.data.DataLoader,
+    ckpt_path: Path,
+    device: Literal["cuda", "cpu"],
+    num_classes: int,
 ):
     if ckpt_path is not None:
         checkpoint = torch.load(str(ckpt_path))
         model = model.load_state_dict(checkpoint["state_dict"])
     acc1 = 0.0
-    acc3 = 0.0
-    top1_acc = Accuracy(top_k=1).to(device)
-    top3_acc = Accuracy(top_k=3).to(device)
+    # acc3 = 0.0
+    top1_acc = Accuracy(top_k=1, task="multiclass", num_classes=num_classes).to(device)
+    # top3_acc = Accuracy(top_k=3, task="multiclass", num_classes=num_classes).to(device)
 
     model.eval()
 
@@ -39,7 +40,7 @@ def test_loop(
                 pbar.set_description("[Test]")
                 pbar.set_postfix(
                     acc1=f"{acc1:.2f}",
-                    acc3=f"{acc3:.2f}",
+                    # acc3=f"{acc3:.2f}",
                 )
 
                 images = batch[0].to(device)
@@ -49,7 +50,7 @@ def test_loop(
                 pred = torch.argmax(output, dim=1)
 
                 acc1 = top1_acc(output, target)
-                acc3 = top3_acc(output, target)
+                # acc3 = top3_acc(output, target)
 
                 preds.append(pred)
                 targets.append(target)
@@ -57,7 +58,7 @@ def test_loop(
     preds = torch.cat(preds)
     targets = torch.cat(targets)
     print(f"Top1 Accuracy : {top1_acc.compute()}")
-    print(f"Top3 Accuracy : {top3_acc.compute()}")
+    # print(f"Top3 Accuracy : {top3_acc.compute()}")
 
     return top1_acc.compute(), preds.cpu().detach(), targets.cpu().detach()
 
@@ -77,7 +78,8 @@ def calcurate_cls_score(
         xticklabels=classes,
         yticklabels=classes,
         square=True,
-        annot=False,
+        annot=True,
+        fmt="d",
         # cmap=
     )
     plt.savefig(savepath)

@@ -1,0 +1,7 @@
+_target_: src.datamodules.hel.HELDataModule
+
+data_source: ${data_dir} # data_dir is specified in config.yaml
+batch_size: 64
+num_workers: 4
+pin_memory: True
+data_type: render

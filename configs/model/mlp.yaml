@@ -1,0 +1,6 @@
+_target_: src.models.mlp.MLP
+
+input_length: 1434
+num_classes: -1
+mlp_dim: 512
+drop_rate: 0.2
