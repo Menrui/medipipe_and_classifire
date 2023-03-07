@@ -36,8 +36,8 @@ class MPDataModule(BaseDataModule):
                 # transforms.RandomHorizontalFlip(0.5),
                 # transforms.RandomRotation(degrees=2),
                 # transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
-                transforms.RandomAffine(degrees=1, translate=(0.1, 0.1)),
-                # transforms.RandomAffine(degrees=0, translate=(0.2, 0.2)),
+                # transforms.RandomAffine(degrees=1, translate=(0.1, 0.1)),
+                transforms.RandomAffine(degrees=0, translate=(0.2, 0.2)),
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
             ]
