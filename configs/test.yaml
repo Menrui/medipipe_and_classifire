@@ -1,0 +1,28 @@
+# @package _global_
+
+defaults:
+  - _self_
+  - datamodule: cifar.yaml
+  - model: resnet.yaml
+  - optimizer: adam.yaml
+  - scheduler: steplr.yaml
+  - log_dir: eval.yaml
+
+  - experiment: null
+
+  - debug: null
+
+  - hparams_search: null
+
+  - override hydra/hydra_logging: colorlog
+  - override hydra/job_logging: colorlog
+
+original_work_dir: ${hydra:runtime.cwd}
+data_dir: ${original_work_dir}/data/
+
+seed: 9999
+
+gpu: 1
+
+name: "default"
+ckpt_path: ???

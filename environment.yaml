@@ -1,0 +1,43 @@
+name: develop
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - pytorch-gpu=1.10.1
+  - torchvision=0.11.2
+  - cudatoolkit=11.3
+  - ca-certificates
+  - openssl
+  - imageio
+  - ipykernel
+  - numba
+  - opencv
+  - pandas
+  - pyyaml
+  - scikit-image
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - tensorboard
+  - tqdm
+  - torchinfo
+  - pytorch-lightning=1.6.4
+  - certifi
+  - mlflow=1.28.0
+  - hydra-core
+  - pre-commit # hooks for applying linters on commit
+  - black # code formatting
+  - isort # import sorting
+  - flake8 # code analysis
+  - mypy
+  - nbstripout # remove output from jupyter notebooks
+  - python-dotenv # loading env variables from .env file
+  - rich # beautiful text formatting in terminal
+  - pytest # tests
+  - sh # for running bash commands in some tests
+  - pudb # debugger
+  - pip:
+      - colorlog
+      - hydra-colorlog
+      - hydra-optuna-sweeper

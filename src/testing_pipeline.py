@@ -1,24 +1,102 @@
+import os
 from pathlib import Path
-from typing import Literal, Union
+from typing import Literal, Optional, Union
 
+import hydra
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
+from omegaconf import DictConfig
 from sklearn.metrics import confusion_matrix
 from torchmetrics import Accuracy
 from tqdm import tqdm
 
+from src import utils
+from src.utils.logger import get_logger
 
-def test():
-    pass
+log = get_logger(__name__)
+
+
+def test(config: DictConfig) -> Optional[float]:
+    log.info("Start testining!")
+    if config.get("seed"):
+        utils.seed_everything(config.seed)
+
+    if not os.path.isabs(config.ckpt_path):
+        config.ckpt_path = os.path.join(
+            hydra.utils.get_original_cwd(), config.ckpt_path
+        )
+
+    log.info(f"Instantiating dataset <{config.datamodule._target_}>")
+    datamodule = hydra.utils.instantiate(config.datamodule)
+    if config.model.get("num_classes") == -1:
+        config.model.num_classes = datamodule.num_classes
+
+    log.info(f"Instantiating model <{config.model._target_}>")
+    model = hydra.utils.instantiate(config.model)
+
+    if config.get("gpu"):
+        device = "cuda"
+        model = model.cuda()
+    else:
+        device = "cpu"
+
+    test_loader = datamodule.test_dataloader()
+    ckpt_path = config.ckpt_path
+
+    checkpoint = torch.load(str(ckpt_path))
+    test_loader = datamodule.test_dataloader()
+    model.load_state_dict(checkpoint["state_dict"]),
+    acc, preds, targets = test_loop(
+        model=model,
+        loader=test_loader,
+        ckpt_path=None,
+        device=device,
+        num_classes=datamodule.num_classes,
+    )
+    log.info(f"test acc : {acc}")
+    class_tags = list(datamodule.data_test.class_to_idx.keys())
+    calcurate_cls_score(
+        preds=preds,
+        targets=targets,
+        classes=class_tags,
+        savepath=Path("confusion_matrix.png"),
+    )
+
+    acc_cal = Accuracy(
+        top_k=1, task="multiclass", num_classes=datamodule.num_classes, average=None
+    )
+    classwise_acc = acc_cal(preds, targets)
+    log.info(
+        f"class wise acc | {' | '.join([f'{tag}:{classwise_acc[i]:.3f}' for i, tag in enumerate(class_tags)])}"
+    )
+
+    # print(datamodule.data_test.data_paths.shape)
+    # print(datamodule.data_test.labels.shape)
+    # print(targets.shape)
+    # print(preds.shape)
+
+    result_df = pd.DataFrame(
+        [
+            datamodule.data_test.data_paths,
+            # datamodule.data_test.labels,
+            targets.numpy(),
+            preds.numpy(),
+        ],
+        index=["PATH", "TARGETS", "PREDs"],
+    ).T
+    result_df.to_csv("result.csv", index=None)
+
+    with open("category.txt", "w") as o:
+        print(*list(datamodule.data_test.class_to_idx.keys()), file=o, sep=",")
 
 
 def test_loop(
     model: torch.nn.Module,
     loader: torch.utils.data.DataLoader,
-    ckpt_path: Path,
+    ckpt_path: Optional[Path],
     device: Literal["cuda", "cpu"],
     num_classes: int,
 ):
