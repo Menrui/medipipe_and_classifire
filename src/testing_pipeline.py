@@ -49,6 +49,7 @@ def test(config: DictConfig) -> Optional[float]:
     checkpoint = torch.load(str(ckpt_path))
     test_loader = datamodule.test_dataloader()
     model.load_state_dict(checkpoint["state_dict"]),
+    log.info(f"load checkpoint : epoch={checkpoint['epoch']}")
     acc, preds, targets = test_loop(
         model=model,
         loader=test_loader,
