@@ -136,3 +136,4 @@ dmypy.json
 # My custom ignore
 debug*.py
 datasets/*
+*.csv
