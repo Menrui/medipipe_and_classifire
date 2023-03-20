@@ -1,7 +1,7 @@
 _target_: torch.optim.Adam
-lr: 0.001
+lr: 0.001 # 学習率
 betas:
-  - 0.9
-  - 0.999
-eps: 1e-8
-weight_decay: 0
+  - 0.9 # adamのパラメータ．基本的に変更不要．
+  - 0.999 # adamのパラメータ．基本的に変更不要．
+eps: 1e-8 # adamのパラメータ．基本的に変更不要．
+weight_decay: 0 # adamのパラメータ．基本的に変更不要．

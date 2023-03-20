@@ -1,5 +1,5 @@
 _target_: src.models.resnet.Classifire
 
 arch: "resnet50"
-pretrain: True
-num_classes: -1
+pretrain: True # Imagenet事前学習の使用可否
+num_classes: -1 # プログラム内で書き換えるため変更不要

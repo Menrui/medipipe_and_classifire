@@ -14,9 +14,13 @@ class MPDataset(Dataset):
         self,
         data_dir: Path = Path("data"),
         stage: str = "train",
-        val_test_split_process: tuple[str, str] = ("human", "human"),
-        human_ids: list[list[str]] = [["A", "B", "C", "D"], ["E", "F"], ["G", "H"]],
-        train_val_test_split_rate: tuple[float, float, float] = (0.6, 0.2, 0.2),
+        val_test_split_process: tuple[str, str] = ("human", "human"),  # 未使用
+        human_ids: list[list[str]] = [
+            ["A", "B", "C", "D"],
+            ["E", "F"],
+            ["G", "H"],
+        ],  # train/val/testに割り振るディレクトリ名
+        train_val_test_split_rate: tuple[float, float, float] = (0.6, 0.2, 0.2),  # 未使用
         transform: transforms.Compose = None,
         data_type: Literal["image", "mesh", "render"] = "render",
     ):

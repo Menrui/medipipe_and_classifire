@@ -1,7 +1,7 @@
-_target_: src.datamodules.mp.MPDataModule
+_target_: src.datamodules.mp.MPDataModule # 実際に使用するクラス
 
 data_source: ${data_dir} # data_dir is specified in config.yaml
-batch_size: 64
-num_workers: 4
-pin_memory: True
-data_type: render
+batch_size: 64 # バッチサイズ
+num_workers: 4 # DataLoaderのワーカー数
+pin_memory: True # DataLoaderのパラメータ
+data_type: render # image:画像  render:facemesh画像  mesh:facemesh座標データ
